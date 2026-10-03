@@ -140,7 +140,9 @@ public final class JadxWorker implements AutoCloseable {
         };
     }
 
-    static void checkApi() {
+    public static void main(String[] argv) throws Exception {
+        PrintStream output = new PrintStream(new FileOutputStream(FileDescriptor.out), true, StandardCharsets.UTF_8);
+        System.setOut(System.err); // Redirect before any JADX or logging classes initialize.
         if (!JadxDecompiler.getVersion().equals("1.5.6")) throw new IllegalStateException("This worker requires JADX 1.5.6");
         Set<String> plugins = new HashSet<>();
         for (JadxPlugin plugin : ServiceLoader.load(JadxPlugin.class)) plugins.add(plugin.getPluginInfo().getPluginId());
@@ -149,16 +151,6 @@ public final class JadxWorker implements AutoCloseable {
         // Resolve the GUI cache dependency as well as core, even when no job is loaded.
         if (!ICodeCache.class.isAssignableFrom(BufferCodeCache.class) || !ICodeCache.class.isAssignableFrom(DiskCodeCache.class))
             throw new IllegalStateException("JADX disk/buffer cache unavailable");
-    }
-
-    public static void main(String[] argv) throws Exception {
-        PrintStream output = new PrintStream(new FileOutputStream(FileDescriptor.out), true, StandardCharsets.UTF_8);
-        System.setOut(System.err); // Redirect before any JADX or logging classes initialize.
-        checkApi();
-        if (Arrays.equals(argv, new String[]{"--check-api"})) {
-            System.err.println("JADX 1.5.6 library APIs and input plugins verified");
-            return;
-        }
         if (argv.length != 1) throw new IllegalArgumentException("Usage: JadxWorker <job-analysis-directory>");
         JadxWorker worker = null;
         try (BufferedReader input = new BufferedReader(new InputStreamReader(System.in, StandardCharsets.UTF_8))) {
