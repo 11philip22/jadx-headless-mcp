@@ -5,7 +5,7 @@ import java.io.*;
 import java.util.*;
 import java.util.regex.Pattern;
 
-/** JSON protocol primitives shared by the worker and its tools. */
+/** JSON and pagination helpers shared by the analysis tools. */
 final class WorkerJson {
     static final Gson JSON = new GsonBuilder().serializeNulls().disableHtmlEscaping().create();
     static final Pattern NEWLINE = Pattern.compile("\\r\\n|[\\n\\r\\u000b\\f\\u001c-\\u001e\\u0085\\u2028\\u2029]");
