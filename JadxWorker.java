@@ -13,22 +13,6 @@ import jadx.gui.cache.code.disk.*;
 
 /** Job-owned JADX MCP server. Discovery is independent of analysis loading. */
 public final class JadxWorker implements AutoCloseable {
-    static final String INSTRUCTIONS = """
-        Analyze the Android inputs registered in analysis/jadx/inputs.json in this workspace.
-        Inputs load on first analysis access. Use status for readiness and reload_inputs after
-        recovering inputs; reload retains this MCP connection and restores persisted edits.
-        Start with packages, class/member metadata, and scoped searches. Source is generated
-        on demand; code searches progressively decompile their selected package. Empty usage
-        results and decompilation failures do not establish that code is unreachable.
-        Respect pagination: count=0 requests all results. Prefer bounded pages for large apps.
-        Original node IDs remain valid after renames. Use signatures for overloads and current
-        numbered source/variable IDs before line comments or variable renames. Edits are verified,
-        rolled back on failure, and persisted under analysis/jadx for the next process.
-        Resources and manifests retain split provenance; binary resources are base64 encoded.
-        Cache statistics describe source caching, not total JVM memory. Clearing the cache keeps
-        loaded inputs and persisted edits. Calls share one serialized analysis session per workspace.
-        """;
-
     private final Path workspace;
     private PrintStream log;
     private int loadCount;
@@ -124,7 +108,6 @@ public final class JadxWorker implements AutoCloseable {
         var transport = new StdioServerTransportProvider(McpJsonDefaults.getMapper(), System.in, output);
         var server = McpServer.sync(transport)
             .serverInfo("reforge-jadx", "1.0.0")
-            .instructions(INSTRUCTIONS)
             .capabilities(McpSchema.ServerCapabilities.builder().tools(false).build())
             .tools(new JadxTools(worker).tools).build();
         Runtime.getRuntime().addShutdownHook(new Thread(() -> { worker.close(); server.close(); }));
