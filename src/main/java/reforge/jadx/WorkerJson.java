@@ -1,3 +1,5 @@
+package reforge.jadx;
+
 import com.google.gson.*;
 import com.google.gson.stream.JsonReader;
 import com.google.gson.stream.JsonToken;

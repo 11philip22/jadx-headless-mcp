@@ -1,3 +1,5 @@
+package reforge.jadx;
+
 import com.google.gson.*;
 import java.util.*;
 import jadx.api.*;

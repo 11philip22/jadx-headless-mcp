@@ -1,3 +1,5 @@
+package reforge.jadx;
+
 import com.google.gson.*;
 import java.io.*;
 import java.nio.ByteBuffer;

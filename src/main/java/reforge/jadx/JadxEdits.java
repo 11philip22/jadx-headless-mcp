@@ -1,3 +1,5 @@
+package reforge.jadx;
+
 import com.google.gson.*;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
