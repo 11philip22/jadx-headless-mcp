@@ -9,6 +9,7 @@
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <jadx.version>1.5.6</jadx.version>
     <jadx.home>/opt/jadx</jadx.home>
+    <pmd.version>7.28.0</pmd.version>
   </properties>
   <dependencies>
     <dependency>
@@ -31,6 +32,41 @@
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-compiler-plugin</artifactId>
         <version>3.14.1</version>
+      </plugin>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-pmd-plugin</artifactId>
+        <version>3.28.0</version>
+        <configuration>
+          <rulesets>
+            <ruleset>${project.basedir}/../config/pmd/unused-code.xml</ruleset>
+            <ruleset>${project.basedir}/../config/pmd/redundant-code.xml</ruleset>
+            <ruleset>${project.basedir}/../config/pmd/design.xml</ruleset>
+            <ruleset>${project.basedir}/../config/pmd/error-prone.xml</ruleset>
+          </rulesets>
+        </configuration>
+        <dependencies>
+          <dependency>
+            <groupId>net.sourceforge.pmd</groupId>
+            <artifactId>pmd-core</artifactId>
+            <version>${pmd.version}</version>
+          </dependency>
+          <dependency>
+            <groupId>net.sourceforge.pmd</groupId>
+            <artifactId>pmd-java</artifactId>
+            <version>${pmd.version}</version>
+          </dependency>
+          <dependency>
+            <groupId>net.sourceforge.pmd</groupId>
+            <artifactId>pmd-javascript</artifactId>
+            <version>${pmd.version}</version>
+          </dependency>
+          <dependency>
+            <groupId>net.sourceforge.pmd</groupId>
+            <artifactId>pmd-jsp</artifactId>
+            <version>${pmd.version}</version>
+          </dependency>
+        </dependencies>
       </plugin>
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
