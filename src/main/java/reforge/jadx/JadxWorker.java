@@ -1,10 +1,10 @@
 package reforge.jadx;
 
-import com.google.gson.*;
 import java.io.*;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.*;
 import java.util.*;
+import java.util.function.Function;
 import io.modelcontextprotocol.json.McpJsonDefaults;
 import io.modelcontextprotocol.server.McpServer;
 import io.modelcontextprotocol.server.transport.StdioServerTransportProvider;
@@ -12,22 +12,28 @@ import io.modelcontextprotocol.spec.McpSchema;
 import jadx.api.*;
 import jadx.api.plugins.JadxPlugin;
 import jadx.gui.cache.code.disk.*;
+import static reforge.jadx.JadxModels.*;
 
-/** Job-owned JADX MCP server. Discovery is independent of analysis loading. */
+/** Job-owned bootstrap and serialized lifecycle; discovery never loads analysis. */
 public final class JadxWorker implements AutoCloseable {
     private final Path workspace;
     private PrintStream log;
     private int loadCount;
-    JadxSession session;
-    JadxSources sources;
-    JadxResources resourceTools;
-    JadxEdits editTools;
+    private Loaded loaded;
+
+    private record Loaded(JadxSession session, JadxServices.Classes classes, JadxServices.Decompiler decompiler,
+                          JadxServices.Search search, JadxServices.Resources resources, JadxServices.Manifests manifests, JadxServices.Edits edits)
+            implements AutoCloseable {
+        @Override public void close() { session.close(); }
+    }
+
+    @FunctionalInterface interface Operation<T> { T run() throws Exception; }
 
     JadxWorker(Path workspace) { this.workspace = workspace.toAbsolutePath().normalize(); }
 
     private void load() throws Exception {
-        if (session != null) return;
-        JsonObject input = JadxInputs.read(workspace);
+        if (loaded != null) return;
+        JadxInputs.Inputs input = JadxInputs.read(workspace);
         Path directory = workspace.resolve("analysis/jadx");
         Files.createDirectories(directory);
         if (log == null) {
@@ -35,62 +41,54 @@ public final class JadxWorker implements AutoCloseable {
             System.setErr(log);
             System.setOut(log);
         }
-        session = new JadxSession(directory, input);
-        loadCount++;
-        sources = new JadxSources(session);
-        resourceTools = new JadxResources(session);
-        editTools = new JadxEdits(session, sources);
+        JadxEditStore store = new JadxEditStore(directory);
+        JadxSession session = new JadxSession(directory, input, store);
+        try {
+            JadxNodes nodes = new JadxNodes(session);
+            ClassService classes = new ClassService(session, nodes);
+            DecompilerService decompiler = new DecompilerService(nodes, session.codeCache());
+            ResourceService resources = new ResourceService(session);
+            loaded = new Loaded(session, classes, decompiler, new SearchService(session, nodes, decompiler, store),
+                    resources, new ManifestService(resources, classes, decompiler), new EditService(session, nodes, decompiler, store));
+            loadCount++;
+        } catch (Exception | Error failure) {
+            try { session.close(); }
+            catch (Exception | Error cleanup) { failure.addSuppressed(cleanup); }
+            throw failure;
+        }
     }
 
-    JsonObject readiness(boolean reload) {
+    JadxServices.Classes classes() { return loaded.classes(); }
+    JadxServices.Decompiler decompiler() { return loaded.decompiler(); }
+    JadxServices.Search search() { return loaded.search(); }
+    JadxServices.Resources resources() { return loaded.resources(); }
+    JadxServices.Manifests manifests() { return loaded.manifests(); }
+    JadxServices.Edits edits() { return loaded.edits(); }
+
+    Readiness readiness(boolean reload) {
         try {
             if (reload) close();
             load();
-            resourceTools.loadTables();
-            String manifestError = null;
-            try {
-                boolean base = resourceTools.manifests().values().stream().anyMatch(manifest ->
-                    manifest.getTagName().equals("manifest") && manifest.getAttribute("split").isEmpty()
-                    && !manifest.getAttribute("package").isBlank());
-                if (!base) throw new IllegalArgumentException("No readable base AndroidManifest.xml with a package ID");
-            } catch (Exception ex) { manifestError = "Android manifest unavailable: " + ex.getMessage(); }
-            JsonObject result = WorkerJson.extend(session.status(), "load_count", loadCount);
-            if (manifestError != null) {
-                result.addProperty("manifest_error", manifestError);
-                result.getAsJsonArray("limitations").add(manifestError);
-            }
-            return result;
+            loaded.resources().loadTables();
+            String manifestError = loaded.manifests().readinessError();
+            return new Readiness(loaded.session().status(loadCount), manifestError, loadCount);
         } catch (Exception ex) {
             ex.printStackTrace(System.err);
-            String error = "Android manifest unavailable: " + ex.getMessage();
-            return WorkerJson.obj("class_count", 0, "package_count", 0, "resource_count", 0,
-                "resources", List.of(), "limitations", List.of(error), "manifest_error", error,
-                "pid", ProcessHandle.current().pid(), "load_count", loadCount);
+            return new Readiness(null, "Android manifest unavailable: " + ex.getMessage(), loadCount);
         }
     }
 
-    synchronized McpSchema.CallToolResult call(String name, JsonObject arguments, JadxTools.Handler handler) {
+    synchronized <T> T call(String name, Operation<T> operation, Function<Exception, T> onFailure) {
         try {
             if (!Set.of("status", "reload_inputs").contains(name)) load();
-            int offset = WorkerJson.integer(arguments, "offset", 0);
-            int count = WorkerJson.integer(arguments, "count", 0);
-            JsonObject result = handler.call(arguments, offset, count);
-            String json = WorkerJson.JSON.toJson(result);
-            return McpSchema.CallToolResult.builder().addTextContent(json)
-                .structuredContent(McpJsonDefaults.getMapper(), json).build();
-        } catch (Exception ex) {
-            ex.printStackTrace(System.err);
-            return McpSchema.CallToolResult.builder().isError(true)
-                .addTextContent(ex.getClass().getSimpleName() + ": " + ex.getMessage()).build();
-        }
+            return operation.run();
+        } catch (Exception ex) { return onFailure.apply(ex); }
     }
 
     @Override public synchronized void close() {
-        if (session != null) session.close();
-        session = null;
-        sources = null;
-        resourceTools = null;
-        editTools = null;
+        Loaded previous = loaded;
+        loaded = null;
+        if (previous != null) previous.close();
     }
 
     public static void main(String[] argv) throws Exception {

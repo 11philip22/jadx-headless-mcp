@@ -67,3 +67,22 @@ container deduplication.
 
 `status` loads inputs and checks the base manifest; `reload_inputs` rereads the
 inventory in the same process. Each workspace needs its own server process.
+
+## Code structure
+
+`JadxTools` owns the MCP contract and encoding. `JadxWorker` owns serialized calls,
+lazy loading, reload, and shutdown. Six services implement typed Java interfaces
+in `JadxServices`, with request/result records in `JadxModels` and decoding in
+`JadxArguments`. `JadxSession`, `JadxCodeCache`, and `JadxEditStore` separately own
+loaded state, cache state, and committed edits. Services share `JadxNodes` for
+original IDs and node resolution.
+
+The refactor preserves all 31 tools and the existing `analysis/jadx/` inventory,
+edit, cache, and log paths. Source remains lazy; renames and comments regenerate
+and verify source before an atomic save. Reload closes the old session before
+publishing a fully constructed replacement.
+
+See [code architecture](../docs/worker-jadx-code-architecture.md) for diagrams,
+tool routing, and the runtime verification checklist. There is no tracked JADX
+test suite. This refactor was reviewed with source-level checks only; builds and
+runtime tests were deliberately not run.

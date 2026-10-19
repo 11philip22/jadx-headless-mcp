@@ -7,7 +7,7 @@ import java.io.*;
 import java.util.*;
 import java.util.regex.Pattern;
 
-/** JSON and pagination helpers shared by the analysis tools. */
+/** JSON codecs and text normalization shared by the worker boundaries. */
 final class WorkerJson {
     static final Gson JSON = new GsonBuilder().serializeNulls().disableHtmlEscaping().create();
     static final Pattern NEWLINE = Pattern.compile("\\r\\n|[\\n\\r\\u000b\\f\\u001c-\\u001e\\u0085\\u2028\\u2029]");
@@ -64,13 +64,6 @@ final class WorkerJson {
         if (!value.isJsonPrimitive() || !value.getAsJsonPrimitive().isBoolean())
             throw new IllegalArgumentException(name + " must be a boolean");
         return value.getAsBoolean();
-    }
-
-    static JsonObject page(List<?> items, int offset, int count) {
-        if (offset < 0 || count < 0) throw new IllegalArgumentException("offset and count must be nonnegative; count=0 returns all");
-        int start = Math.min(offset, items.size());
-        int end = count == 0 ? items.size() : (int) Math.min((long) offset + count, items.size());
-        return obj("items", items.subList(start, end), "total", items.size(), "offset", offset, "count", count);
     }
 
     static List<String> lines(String text) {
