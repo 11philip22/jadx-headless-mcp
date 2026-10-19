@@ -34,7 +34,7 @@ final class ResourceService implements JadxServices.Resources {
     }
 
     @Override public ResourceContent resourceFile(String name) throws IOException {
-    @Override public     loadTables();
+        loadTables();
         Object resource = session.resources().get(name);
         if (resource == null) throw new IllegalArgumentException("Resource unavailable: " + name);
         ResContainer content = resource instanceof ResourceFile f ? f.loadContent() : (ResContainer) resource;
@@ -62,16 +62,16 @@ final class ResourceService implements JadxServices.Resources {
 
     @Override public List<String> names() { return List.copyOf(session.resources().keySet()); }
     @Override public ResourceNames allNames(PageRequest page) {
-    @Override public     loadTables();
-    @Override public     return new ResourceNames(page.select(names().stream().sorted().toList()), session.resourceErrors());
+        loadTables();
+        return new ResourceNames(page.select(names().stream().sorted().toList()), session.resourceErrors());
     }
     @Override public Page<ResourceContent> strings(PageRequest page) throws IOException {
-    @Override public     loadTables();
+        loadTables();
         List<String> names = names().stream().filter(n -> n.endsWith("/strings.xml")).toList();
         if (names.isEmpty()) throw new IllegalArgumentException("No strings.xml resources available; " + String.join("; ", session.resourceErrors()));
         Page<String> selected = page.select(names);
         List<ResourceContent> items = new ArrayList<>();
-    @Override public     for (String name : selected.items()) items.add(resourceFile(name));
+        for (String name : selected.items()) items.add(resourceFile(name));
         return selected.withItems(items);
     }
 }

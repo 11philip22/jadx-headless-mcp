@@ -44,15 +44,15 @@ final class DecompilerService implements JadxServices.Decompiler {
             text = String.join("\n", numberedLines);
         }
         return new ClassSource(JadxNodes.describe(cls), cls.getTopParentClass().getRawName(), text,
-    @Override public @Override public @Override public             variables(code), lineTargets(code).keySet(), sourceErrors(cls));
+                variables(code), lineTargets(code).keySet(), sourceErrors(cls));
     }
 
     @Override public MethodSource methodSource(MethodRequest request) {
         MethodNode method = nodes.method(request);
-    @Override public     source(method.getParentClass());
+        source(method.getParentClass());
         String text = method.getCodeStr();
         if (WorkerJson.strip(text).isEmpty()) throw new IllegalStateException("Method has no rendered source (possibly inlined or suppressed); inspect class or smali");
-    @Override public     return new MethodSource(JadxNodes.describe(method), text, sourceErrors(method.getParentClass()));
+        return new MethodSource(JadxNodes.describe(method), text, sourceErrors(method.getParentClass()));
     }
 
     @Override public CacheStats cacheStats() throws IOException { return cache.stats(); }
