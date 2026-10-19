@@ -10,6 +10,25 @@ import java.util.zip.*;
 
 /** Workspace input validation and container-aware selection, independent of transport. */
 final class JadxInputs {
+    record Inputs(List<Path> paths, Inventory inventory) {}
+    record InventoryStatus(List<String> limitations, boolean hasDex) {}
+
+    static final class Inventory {
+        private final JsonArray json;
+        Inventory(JsonArray json) { this.json = json.deepCopy(); }
+        JsonArray json() { return json.deepCopy(); }
+        InventoryStatus status() {
+            List<String> result = new ArrayList<>();
+            boolean hasDex = false;
+            for (JsonElement row : json) {
+                JsonObject item = row.getAsJsonObject();
+                if (item.has("limitation") && !item.get("limitation").isJsonNull() && !item.get("limitation").getAsString().isEmpty())
+                    result.add(item.get("limitation").getAsString());
+                hasDex |= item.has("has_dex") && item.get("has_dex").getAsBoolean();
+            }
+            return new InventoryStatus(List.copyOf(result), hasDex);
+        }
+    }
     static Path validate(Path workspace, String relative) throws IOException {
         Path name = Path.of(relative), root = workspace.toRealPath();
         Path path = root.resolve(name).normalize();
@@ -54,7 +73,7 @@ final class JadxInputs {
         }
     }
 
-    static JsonObject read(Path workspace) throws Exception {
+    static Inputs read(Path workspace) throws Exception {
         JsonElement value = JsonParser.parseString(Files.readString(workspace.resolve("analysis/jadx/inputs.json")));
         if (!value.isJsonArray()) throw new IllegalArgumentException("Android input inventory must be an array");
         JsonArray inventory = value.getAsJsonArray();
@@ -73,6 +92,6 @@ final class JadxInputs {
             if (!inputs.contains(path.toString())) inputs.add(path.toString());
         }
         if (inputs.isEmpty()) throw new IllegalArgumentException("No Android inputs registered in analysis/jadx/inputs.json");
-        return WorkerJson.obj("inputs", inputs, "inventory", inventory);
+        return new Inputs(inputs.stream().map(Path::of).toList(), new Inventory(inventory));
     }
 }
