@@ -1,21 +1,37 @@
-JADX MCP server
+JADX headless MCP server
 
-This project is based on the following projects by zinja-coder and their
-contributors, both licensed under the Apache License, Version 2.0:
+This product includes adaptations of the following projects, licensed under
+the Apache License, Version 2.0. Their applicable upstream attributions are
+retained below.
 
-  jadx-ai-mcp
-  https://github.com/zinja-coder/jadx-ai-mcp
+jadx-ai-mcp
+https://github.com/zinja-coder/jadx-ai-mcp
 
-  jadx-mcp-server
-  https://github.com/zinja-coder/jadx-mcp-server
-
-Upstream copyright notices:
-
-Copyright (c) 2025 Jafar Pathan (zinja-coder) and contributors
 Copyright (c) 2025 Jadx AI MCP developer(s) (https://github.com/zinja-coder/jadx-ai-mcp)
+See the file 'LICENSE' for copying permission
+
+jadx-mcp-server
+https://github.com/zinja-coder/jadx-mcp-server
+
 Copyright (c) 2025 jadx mcp server developer(s) (https://github.com/zinja-coder/jadx-ai-mcp)
+See the file 'LICENSE' for copying permission
 
-This project adapts the upstream work into a standalone, headless Java MCP
-server with workspace-based input loading, persistent edits, and source caching.
+Author attribution from the upstream tool modules:
+Author: Jafar Pathan (zinja-coder@github)
 
-See LICENSE for the Apache License, Version 2.0.
+Modifications in this product
+
+The upstream tool contracts and analysis operations have been adapted into a
+standalone, headless Java MCP server. Changes include the MCP transport,
+workspace input management, stable node identities, lazy source generation,
+source caching, and persistent renames and comments with source verification.
+
+Bundled components
+
+The binary distribution includes JADX, the Model Context Protocol Java SDK,
+Gson, and their bundled dependencies. See the license, copyright, and notice
+resources distributed with the JAR for their respective terms and attributions.
+
+The full Apache License, Version 2.0 is provided separately in LICENSE.
+This notice is informational and does not modify any license terms.
+Attribution does not imply endorsement by any upstream author or project.
