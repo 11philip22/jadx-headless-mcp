@@ -11,6 +11,7 @@ import io.modelcontextprotocol.spec.McpSchema;
 final class JadxTools {
     private static final Gson WIRE = new GsonBuilder().serializeNulls().disableHtmlEscaping()
             .setFieldNamingPolicy(FieldNamingPolicy.LOWER_CASE_WITH_UNDERSCORES).create();
+    private static final Gson DISPLAY = WorkerJson.JSON.newBuilder().setPrettyPrinting().create();
     @FunctionalInterface interface Handler {
         Object call(JadxArguments arguments) throws Exception;
     }
@@ -195,10 +196,58 @@ final class JadxTools {
         return McpSchema.CallToolResult.builder().isError(true).addTextContent(type + ": " + message).build();
     }
 
-    private static McpSchema.CallToolResult success(Object result) {
-        String json = WorkerJson.JSON.toJson(encode(result));
-        return McpSchema.CallToolResult.builder().addTextContent(json)
+    static McpSchema.CallToolResult success(Object result) {
+        JsonObject encoded = encode(result);
+        String json = WorkerJson.JSON.toJson(encoded);
+        return McpSchema.CallToolResult.builder().addTextContent(displayText(encoded, json))
                 .structuredContent(McpJsonDefaults.getMapper(), json).build();
+    }
+
+    private static String displayText(JsonObject encoded, String json) {
+        JsonObject metadata = encoded.deepCopy();
+        Map<String, String> sources = new LinkedHashMap<>();
+        extractSources(metadata, "", sources);
+        if (sources.isEmpty()) return json;
+        StringBuilder text = new StringBuilder("Metadata:\n").append(DISPLAY.toJson(metadata));
+        sources.forEach((path, source) -> text.append("\n\nSource")
+                .append(sources.size() > 1 ? " (" + path + ")" : "").append(":\n").append(source));
+        return text.toString();
+    }
+
+    private static void extractSources(JsonElement value, String path, Map<String, String> sources) {
+        if (value instanceof JsonArray array) {
+            for (int i = 0; i < array.size(); i++) extractSources(array.get(i), path + "[" + i + "]", sources);
+        } else if (value instanceof JsonObject object) {
+            var entries = object.entrySet().iterator();
+            while (entries.hasNext()) {
+                var entry = entries.next();
+                String key = entry.getKey();
+                String location = path.isEmpty() ? key : path + "." + key;
+                boolean source = switch (key) {
+                    case "code", "smali", "xml", "verified_source" -> true;
+                    case "content" -> new JsonPrimitive("text").equals(object.get("encoding"));
+                    default -> false;
+                };
+                if (source && extractText(entry.getValue(), location, sources)) entries.remove();
+                // Only descend into result containers; inventory and edit metadata stay intact.
+                else if (Set.of("items", "manifests", "components").contains(key))
+                    extractSources(entry.getValue(), location, sources);
+            }
+        }
+    }
+
+    private static boolean extractText(JsonElement value, String path, Map<String, String> sources) {
+        if (value instanceof JsonPrimitive primitive && primitive.isString()) {
+            sources.put(path, primitive.getAsString());
+            return true;
+        }
+        if (value instanceof JsonArray array && !array.isEmpty()) {
+            for (JsonElement item : array)
+                if (!(item instanceof JsonPrimitive primitive) || !primitive.isString()) return false;
+            for (int i = 0; i < array.size(); i++) sources.put(path + "[" + i + "]", array.get(i).getAsString());
+            return true;
+        }
+        return false;
     }
 
     private static JsonObject encode(Object value) {
