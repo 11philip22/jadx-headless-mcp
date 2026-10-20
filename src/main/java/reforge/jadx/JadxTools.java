@@ -26,6 +26,14 @@ final class JadxTools {
         add("reload_inputs", "Reload the workspace input inventory and persisted edits in this process; return updated Android readiness.",
             "{\"type\":\"object\",\"properties\":{},\"additionalProperties\":false}",
             a -> worker.readiness(true));
+        add("load_apk", "Load a workspace-relative APK, APKM, XAPK, or DEX and remember it for future runs. Repeated paths are not added twice.",
+            """
+            {"type":"object","properties":{"path":{"type":"string"}},"required":["path"],"additionalProperties":false}
+            """, a -> worker.loadApk(a.string("path")));
+        add("unload_apk", "Unregister a workspace-relative input and reload the remainder. Containers also remove their registered members. Preserve files and saved edits.",
+            """
+            {"type":"object","properties":{"path":{"type":"string"}},"required":["path"],"additionalProperties":false}
+            """, a -> worker.unloadApk(a.string("path")));
         add("get_all_classes",
             "List bytecode classes, including inner classes, without decompiling; count=0 returns all.",
             """
@@ -274,6 +282,10 @@ final class JadxTools {
         if (value instanceof EditResult<?> result) return WorkerJson.obj("updated", JadxEditStore.encode(result.updated()), "verified_source", WIRE.toJsonTree(result.verifiedSource()));
         if (value instanceof Comments result) return WorkerJson.obj("comments", result.comments().stream().map(JadxEditStore::encode).toList());
         if (value instanceof Readiness result) {
+            if (result.status() == null && result.manifestError() == null)
+                return WorkerJson.obj("inputs", List.of(), "loaded_inputs", List.of(),
+                        "class_count", 0, "package_count", 0, "resource_count", 0, "resources", List.of(),
+                        "limitations", List.of(JadxInputs.NO_INPUTS), "pid", ProcessHandle.current().pid(), "load_count", result.loadCount());
             if (result.status() == null) return WorkerJson.obj("class_count", 0, "package_count", 0, "resource_count", 0,
                     "resources", List.of(), "limitations", List.of(result.manifestError()), "manifest_error", result.manifestError(),
                     "pid", ProcessHandle.current().pid(), "load_count", result.loadCount());

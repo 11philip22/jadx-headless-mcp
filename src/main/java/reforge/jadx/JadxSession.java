@@ -75,6 +75,12 @@ final class JadxSession implements AutoCloseable {
     List<PackageNode> packages() { return List.copyOf(root.getPackages()); }
     PackageNode resolvePackage(String name) { return root.resolvePackage(name); }
     boolean hasUsageErrors() { return loadErrors != 0 || !loadFailures.isEmpty(); }
+    void requireLoadable() {
+        if (!loadFailures.isEmpty())
+            throw new IllegalArgumentException("Android input loading failed: " + String.join("\n", loadFailures));
+        if (classes.isEmpty() && decompiler.getResources().stream().noneMatch(resource -> resource.getZipEntry() != null))
+            throw new IllegalArgumentException("No classes or Android resources loaded from the proposed inputs");
+    }
     boolean tablesLoaded() { return tablesLoaded; }
     void finishResourceTables() { tablesLoaded = true; }
     void addResource(String table, String name, Object resource) { resources.put(resources.containsKey(name) ? table + ":" + name : name, resource); }
