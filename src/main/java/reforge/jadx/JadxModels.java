@@ -49,8 +49,7 @@ final class JadxModels {
     record Methods(List<Identity> methods) {}
     record Fields(List<Identity> fields) {}
     record Smali(Identity identity, String smali) {}
-    record ClassSource(Identity identity, String sourceClass, String code, List<Variable> variables,
-                       Set<Integer> commentableLines, List<String> analysisErrors) {}
+    record ClassSource(Identity identity, String code) {}
     record MethodSource(Identity identity, String code, List<String> analysisErrors) {}
     interface SearchFailure {}
     record SourceErrors(String className, List<String> errors) implements SearchFailure {}

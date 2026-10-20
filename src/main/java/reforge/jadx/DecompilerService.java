@@ -43,8 +43,7 @@ final class DecompilerService implements JadxServices.Decompiler {
             for (String line : WorkerJson.lines(text)) numberedLines.add((numberedLines.size() + 1) + ": " + line);
             text = String.join("\n", numberedLines);
         }
-        return new ClassSource(JadxNodes.describe(cls), cls.getTopParentClass().getRawName(), text,
-                variables(code), lineTargets(code).keySet(), sourceErrors(cls));
+        return new ClassSource(JadxNodes.describe(cls), text);
     }
 
     @Override public MethodSource methodSource(MethodRequest request) {

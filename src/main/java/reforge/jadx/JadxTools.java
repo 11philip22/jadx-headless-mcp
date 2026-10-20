@@ -45,10 +45,10 @@ final class JadxTools {
             {"type": "object", "properties": {}, "required": [], "additionalProperties": false}
             """, a -> worker.classes().packageTree());
         add("get_class_source",
-            "Decompile one class (inner classes return their enclosing source). Includes variable IDs and commentable lines; reread before line edits.",
+            "Return class source (inner classes return their enclosing source). Read current numbered source before line edits.",
             """
             {"type": "object", "properties": {"class_name": {"type": "string"}, "with_line_numbers": {"type": "boolean", "default": false}}, "required": ["class_name"], "additionalProperties": false}
-            """, a -> worker.decompiler().classSource(a.string("class_name"), a.bool("with_line_numbers", false)));
+            """, a -> WorkerJson.obj("response", worker.decompiler().classSource(a.string("class_name"), a.bool("with_line_numbers", false)).code()));
         add("get_methods_of_class",
             "List methods with stable original IDs and overload signatures, without decompiling.",
             """
@@ -165,7 +165,7 @@ final class JadxTools {
             {"type": "object", "properties": {"old_package_name": {"type": "string"}, "new_package_name": {"type": "string"}}, "required": ["old_package_name", "new_package_name"], "additionalProperties": false}
             """, a -> worker.edits().renamePackage(a.string("old_package_name"), a.string("new_package_name")));
         add("rename_variable",
-            "Rename a variable using current source metadata. Use a full short method signature for overloads and reg/ssa to disambiguate variables.",
+            "Rename a variable by name. Use a full short method signature for overloads; ambiguous names return reg/ssa candidates.",
             """
             {"type": "object", "properties": {"class_name": {"type": "string"}, "method_name": {"type": "string"}, "variable_name": {"type": "string"}, "new_name": {"type": "string"}, "reg": {"type": ["string", "null"], "default": null}, "ssa": {"type": ["string", "null"], "default": null}}, "required": ["class_name", "method_name", "variable_name", "new_name"], "additionalProperties": false}
             """, a -> worker.edits().renameVariable(worker.edits().variableTarget(a.variableRename()), a.variableSelection()));
@@ -212,6 +212,7 @@ final class JadxTools {
     }
 
     private static String displayText(JsonObject encoded, String json) {
+        if (encoded.size() == 1 && encoded.has("response")) return encoded.get("response").getAsString();
         JsonObject metadata = encoded.deepCopy();
         Map<String, String> sources = new LinkedHashMap<>();
         extractSources(metadata, "", sources);
@@ -265,9 +266,7 @@ final class JadxTools {
             return WorkerJson.obj("items", items, "total", page.total(), "offset", page.offset(), "count", page.count());
         }
         if (value instanceof Smali result) return WorkerJson.extend(encode(result.identity()), "smali", result.smali());
-        if (value instanceof ClassSource result) return WorkerJson.extend(encode(result.identity()),
-                "source_class", result.sourceClass(), "code", result.code(), "variables", WIRE.toJsonTree(result.variables()),
-                "commentable_lines", result.commentableLines(), "analysis_errors", result.analysisErrors());
+        if (value instanceof ClassSource result) return WorkerJson.extend(encode(result.identity()), "code", result.code());
         if (value instanceof MethodSource result) return WorkerJson.extend(encode(result.identity()), "code", result.code(), "analysis_errors", result.analysisErrors());
         if (value instanceof SearchResult result) {
             JsonArray failures = new JsonArray();
