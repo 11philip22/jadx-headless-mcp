@@ -1,0 +1,21 @@
+JADX MCP server
+
+This project is based on the following projects by zinja-coder and their
+contributors, both licensed under the Apache License, Version 2.0:
+
+  jadx-ai-mcp
+  https://github.com/zinja-coder/jadx-ai-mcp
+
+  jadx-mcp-server
+  https://github.com/zinja-coder/jadx-mcp-server
+
+Upstream copyright notices:
+
+Copyright (c) 2025 Jafar Pathan (zinja-coder) and contributors
+Copyright (c) 2025 Jadx AI MCP developer(s) (https://github.com/zinja-coder/jadx-ai-mcp)
+Copyright (c) 2025 jadx mcp server developer(s) (https://github.com/zinja-coder/jadx-ai-mcp)
+
+This project adapts the upstream work into a standalone, headless Java MCP
+server with workspace-based input loading, persistent edits, and source caching.
+
+See LICENSE for the Apache License, Version 2.0.

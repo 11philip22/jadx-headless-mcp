@@ -4,6 +4,13 @@
   <groupId>reforge</groupId>
   <artifactId>jadx-mcp</artifactId>
   <version>1.0.0</version>
+  <licenses>
+    <license>
+      <name>Apache License, Version 2.0</name>
+      <url>https://www.apache.org/licenses/LICENSE-2.0.txt</url>
+      <distribution>repo</distribution>
+    </license>
+  </licenses>
   <properties>
     <maven.compiler.release>21</maven.compiler.release>
     <!-- Rebuild the thin input before every shading pass, including incremental builds. -->
@@ -43,6 +50,19 @@
   </dependencies>
   <build>
     <finalName>jadx-mcp</finalName>
+    <resources>
+      <resource>
+        <directory>src/main/resources</directory>
+      </resource>
+      <resource>
+        <directory>${project.basedir}</directory>
+        <targetPath>META-INF</targetPath>
+        <includes>
+          <include>LICENSE</include>
+          <include>NOTICE</include>
+        </includes>
+      </resource>
+    </resources>
     <plugins>
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
