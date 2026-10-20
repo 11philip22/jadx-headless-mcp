@@ -39,10 +39,10 @@
         <version>3.28.0</version>
         <configuration>
           <rulesets>
-            <ruleset>${project.basedir}/../config/pmd/unused-code.xml</ruleset>
-            <ruleset>${project.basedir}/../config/pmd/redundant-code.xml</ruleset>
-            <ruleset>${project.basedir}/../config/pmd/design.xml</ruleset>
-            <ruleset>${project.basedir}/../config/pmd/error-prone.xml</ruleset>
+            <ruleset>${project.basedir}/config/pmd/unused-code.xml</ruleset>
+            <ruleset>${project.basedir}/config/pmd/redundant-code.xml</ruleset>
+            <ruleset>${project.basedir}/config/pmd/design.xml</ruleset>
+            <ruleset>${project.basedir}/config/pmd/error-prone.xml</ruleset>
           </rulesets>
         </configuration>
         <dependencies>

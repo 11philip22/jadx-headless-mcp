@@ -25,6 +25,18 @@ copies Java MCP SDK **2.0.1** and runtime dependencies into `target/lib/`.
 Compilation uses the installed `lib/jadx-1.5.6-all.jar`; `REFORGE_JADX_HOME` defaults to
 `/opt/jadx` and can also be supplied to Maven as `-Djadx.home=/path/to/jadx-1.5.6`.
 
+## Static analysis
+
+With the build prerequisites above installed and `REFORGE_JADX_HOME` configured,
+run PMD from this repository's root:
+
+```sh
+mvn -B pmd:check
+```
+
+The Maven plugin loads the four rulesets in `config/pmd/`. Violations fail the
+check; the HTML report is written to `target/reports/pmd.html`.
+
 ## MCP configuration
 
 After building, configure a stdio MCP client. Replace the absolute paths with

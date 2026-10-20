@@ -1,0 +1,28 @@
+<?xml version="1.0"?>
+
+<ruleset name="Error Prone"
+         xmlns="http://pmd.sourceforge.net/ruleset/2.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://pmd.sourceforge.net/ruleset/2.0.0 https://pmd.sourceforge.io/ruleset_2_0_0.xsd">
+
+    <description>Detect error-prone Java code.</description>
+
+    <!-- Resources that aren't properly closed -->
+    <!-- <rule ref="category/java/errorprone.xml/CloseResource"/> -->
+
+    <!-- x.equals(null) -->
+    <rule ref="category/java/errorprone.xml/EqualsNull"/>
+
+    <!-- equals() without hashCode(), or vice versa -->
+    <rule ref="category/java/errorprone.xml/OverrideBothEqualsAndHashcode"/>
+
+    <!-- Returning from finally can swallow exceptions -->
+    <rule ref="category/java/errorprone.xml/ReturnFromFinallyBlock"/>
+
+    <!-- Suspicious == comparison between objects -->
+    <rule ref="category/java/errorprone.xml/CompareObjectsWithEquals"/>
+
+    <!-- Wrong key/value type used with collections -->
+    <rule ref="category/java/errorprone.xml/CollectionTypeMismatch"/>
+
+</ruleset>

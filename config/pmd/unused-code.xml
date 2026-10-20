@@ -1,0 +1,44 @@
+<?xml version="1.0"?>
+
+<ruleset name="Dead Code"
+         xmlns="http://pmd.sourceforge.net/ruleset/2.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://pmd.sourceforge.net/ruleset/2.0.0 https://pmd.sourceforge.io/ruleset_2_0_0.xsd">
+
+    <description>
+        Detect unused and dead Java code.
+    </description>
+
+    <!-- Private methods that are never called -->
+    <rule ref="category/java/bestpractices.xml/UnusedPrivateMethod"/>
+
+    <!-- Private fields that are never used -->
+    <rule ref="category/java/bestpractices.xml/UnusedPrivateField"/>
+
+    <!-- Assignments/variables/parameters whose values are never used -->
+    <rule ref="category/java/bestpractices.xml/UnusedAssignment">
+        <properties>
+            <property name="reportUnusedVariables" value="true"/>
+
+            <!-- Allow unused exception variables: catch (Exception e) -->
+            <property name="violationSuppressXPath"
+                      value="./ancestor-or-self::CatchParameter"/>
+        </properties>
+    </rule>
+
+    <!-- Unused Java labels -->
+    <rule ref="category/java/bestpractices.xml/UnusedLabel"/>
+
+    <!-- Method calls where an important return value is ignored -->
+    <rule ref="category/java/errorprone.xml/UnusedReturnValue"/>
+
+    <!-- Unused imports -->
+    <rule ref="category/java/codestyle.xml/UnnecessaryImport">
+        <properties>
+            <!-- Ignore wildcard imports; still report unnecessary explicit imports. -->
+            <property name="violationSuppressXPath"
+                      value=".[self::ImportDeclaration[@ImportOnDemand = true()]]"/>
+        </properties>
+    </rule>
+
+</ruleset>

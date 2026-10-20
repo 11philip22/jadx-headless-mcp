@@ -1,0 +1,37 @@
+<?xml version="1.0"?>
+
+<ruleset name="Design"
+         xmlns="http://pmd.sourceforge.net/ruleset/2.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://pmd.sourceforge.net/ruleset/2.0.0
+                             https://pmd.sourceforge.io/ruleset_2_0_0.xsd">
+
+    <description>
+        Detect unnecessary structure and excessive complexity in Java code.
+    </description>
+
+    <!-- Override that only delegates directly to super -->
+    <rule ref="category/java/design.xml/UselessOverridingMethod"/>
+
+    <!-- Field that could instead be a local variable -->
+    <rule ref="category/java/design.xml/SingularField"/>
+
+    <!-- @SuppressWarnings / PMD suppression that no longer suppresses anything -->
+    <rule ref="category/java/bestpractices.xml/UnnecessaryWarningSuppression"/>
+
+    <!-- Nested if statements that can be combined -->
+    <rule ref="category/java/design.xml/CollapsibleIfStatements"/>
+
+    <!-- Boolean literals returned from conditional branches -->
+    <rule ref="category/java/design.xml/SimplifyBooleanReturns"/>
+
+    <!-- Boolean expressions that can be shortened -->
+    <rule ref="category/java/design.xml/SimplifyBooleanExpressions"/>
+
+    <!-- Boolean ternaries that can use logical operators -->
+    <rule ref="category/java/design.xml/SimplifiedTernary"/>
+
+    <!-- Conditionals that can be expressed more simply -->
+    <rule ref="category/java/design.xml/SimplifyConditional"/>
+
+</ruleset>

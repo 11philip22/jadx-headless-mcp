@@ -1,0 +1,57 @@
+<?xml version="1.0"?>
+
+<ruleset name="Redundant Code"
+         xmlns="http://pmd.sourceforge.net/ruleset/2.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://pmd.sourceforge.net/ruleset/2.0.0 https://pmd.sourceforge.io/ruleset_2_0_0.xsd">
+
+    <description>
+        Detect redundant Java code.
+    </description>
+
+    <!-- Operations that have no effect, e.g. x = x -->
+    <rule ref="category/java/errorprone.xml/IdempotentOperations"/>
+
+    <!-- if conditions that are always true/false -->
+    <rule ref="category/java/errorprone.xml/UnconditionalIfStatement"/>
+
+    <!-- Both branches do exactly the same thing -->
+    <rule ref="category/java/errorprone.xml/IdenticalConditionalBranches"/>
+
+    <!-- Identical exception handlers that can use multi-catch -->
+    <rule ref="category/java/codestyle.xml/IdenticalCatchBranches"/>
+
+    <!-- Catch blocks that only rethrow the caught exception -->
+    <rule ref="category/java/design.xml/AvoidRethrowingException"/>
+
+    <!-- Catch blocks that only wrap an exception in the same type -->
+    <rule ref="category/java/design.xml/AvoidThrowingNewInstanceOfSameException"/>
+
+    <!-- Casts that do not change the expression's use -->
+    <rule ref="category/java/codestyle.xml/UnnecessaryCast"/>
+
+    <!-- Explicit boxing or unboxing that Java already handles -->
+    <rule ref="category/java/codestyle.xml/UnnecessaryBoxing"/>
+
+    <!-- Redundant return; at the end of a void method -->
+    <rule ref="category/java/codestyle.xml/UnnecessaryReturn"/>
+
+    <!-- Constructors equivalent to the implicit default constructor -->
+    <rule ref="category/java/codestyle.xml/UnnecessaryConstructor"/>
+
+    <!-- Variable is created only to immediately return/throw it -->
+    <rule ref="category/java/codestyle.xml/VariableCanBeInlined"/>
+
+    <!-- Braces around a block that serves no purpose -->
+    <rule ref="category/java/codestyle.xml/UnnecessaryBlock"/>
+
+    <!-- Modifiers implied by the declaration -->
+    <rule ref="category/java/codestyle.xml/UnnecessaryModifier"/>
+
+    <!-- Empty statements -->
+    <rule ref="category/java/codestyle.xml/UnnecessarySemicolon"/>
+
+    <!-- Parentheses that do not change expression order -->
+    <rule ref="category/java/codestyle.xml/UselessParentheses"/>
+
+</ruleset>
