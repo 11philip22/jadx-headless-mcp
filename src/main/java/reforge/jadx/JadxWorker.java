@@ -20,6 +20,7 @@ public final class JadxWorker implements AutoCloseable {
     private PrintStream log;
     private int loadCount;
     private Loaded loaded;
+    private boolean stopping;
 
     private record Loaded(JadxSession session, JadxServices.Classes classes, JadxServices.Decompiler decompiler,
                           JadxServices.Search search, JadxServices.Resources resources, JadxServices.Manifests manifests, JadxServices.Edits edits)
@@ -80,6 +81,7 @@ public final class JadxWorker implements AutoCloseable {
 
     synchronized <T> T call(String name, Operation<T> operation, Function<Exception, T> onFailure) {
         try {
+            if (stopping) throw new IllegalStateException("Worker is shutting down");
             if (!Set.of("status", "reload_inputs").contains(name)) load();
             return operation.run();
         } catch (Exception ex) { return onFailure.apply(ex); }
@@ -89,6 +91,11 @@ public final class JadxWorker implements AutoCloseable {
         Loaded previous = loaded;
         loaded = null;
         if (previous != null) previous.close();
+    }
+
+    private synchronized void shutdown() {
+        stopping = true;
+        close();
     }
 
     public static void main(String[] argv) throws Exception {
@@ -105,12 +112,27 @@ public final class JadxWorker implements AutoCloseable {
         if (argv.length != 2 || !argv[0].equals("--workspace"))
             throw new IllegalArgumentException("Usage: JadxWorker --workspace <job-root>");
         JadxWorker worker = new JadxWorker(Path.of(argv[1]));
-        var transport = new StdioServerTransportProvider(McpJsonDefaults.getMapper(), System.in, output);
+        // The SDK reads stdin in blocks; disconnect must also stop JADX's cache writers.
+        InputStream input = new FilterInputStream(System.in) {
+            @Override public int read(byte[] bytes, int offset, int length) throws IOException {
+                try {
+                    int count = super.read(bytes, offset, length);
+                    if (count == -1) worker.shutdown();
+                    return count;
+                } catch (IOException failure) {
+                    worker.shutdown();
+                    throw failure;
+                }
+            }
+        };
+        var transport = new StdioServerTransportProvider(McpJsonDefaults.getMapper(), input, output);
         var server = McpServer.sync(transport)
             .serverInfo("reforge-jadx", "1.0.0")
             .capabilities(McpSchema.ServerCapabilities.builder().tools(false).build())
             .tools(new JadxTools(worker).tools).build();
-        Runtime.getRuntime().addShutdownHook(new Thread(() -> { worker.close(); server.close(); }));
-        // SDK stdio threads own the connection; EOF closes its transport.
+        Runtime.getRuntime().addShutdownHook(new Thread(() -> {
+            try { worker.shutdown(); }
+            finally { server.close(); }
+        }));
     }
 }

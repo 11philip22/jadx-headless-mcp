@@ -2,33 +2,29 @@
 
 ## Build
 
-Install JDK **21** or newer, Maven 3.9, and the full JADX **1.5.6** distribution,
-including its `lib/` JARs and input plugins. Put `java` and `javac` from the same
+Install JDK **21** or newer and Maven **3.9**. Put `java` and `javac` from the same
 JDK on `PATH`.
 
-Build from the repository root on macOS/Linux:
+Build from the repository root on Windows, macOS, or Linux:
 
 ```sh
-export REFORGE_JADX_HOME=/path/to/jadx-1.5.6
-mvn -B -f worker_jadx/pom.xml package
+mvn -B package
 ```
 
-In PowerShell:
+Maven downloads JADX **1.5.6**, its plugins, and Java MCP SDK **2.0.1**, then
+bundles them into `target/jadx-mcp.jar`. Run the JAR with Java **21** or newer:
 
-```powershell
-$env:REFORGE_JADX_HOME = 'C:\tools\jadx-1.5.6'
-mvn -B -f worker_jadx/pom.xml package
+```sh
+java -Xmx2g -Djava.awt.headless=true -jar target/jadx-mcp.jar --workspace /path/to/job
 ```
 
-Maven compiles `src/main/java/` to `target/classes/`, builds the worker JAR, and
-copies Java MCP SDK **2.0.1** and runtime dependencies into `target/lib/`.
-Compilation uses the installed `lib/jadx-1.5.6-all.jar`; `REFORGE_JADX_HOME` defaults to
-`/opt/jadx` and can also be supplied to Maven as `-Djadx.home=/path/to/jadx-1.5.6`.
+Run `mvn -B verify` to build and run the packaged-JAR smoke check. It launches
+the JAR in an isolated directory and checks MCP discovery, input formats,
+decompilation, edits, cache operations, and reload using a small test fixture.
 
 ## Static analysis
 
-With the build prerequisites above installed and `REFORGE_JADX_HOME` configured,
-run PMD from this repository's root:
+With the build prerequisites above installed, run PMD from the repository root:
 
 ```sh
 mvn -B pmd:check
@@ -40,7 +36,7 @@ check; the HTML report is written to `target/reports/pmd.html`.
 ## MCP configuration
 
 After building, configure a stdio MCP client. Replace the absolute paths with
-your checkout, JADX distribution, and job workspace:
+your built JAR and job workspace:
 
 ```json
 {
@@ -50,9 +46,8 @@ your checkout, JADX distribution, and job workspace:
       "args": [
         "-Xmx2g",
         "-Djava.awt.headless=true",
-        "-cp",
-        "/path/to/reforge/worker_jadx/target/classes:/path/to/reforge/worker_jadx/target/lib/*:/path/to/jadx-1.5.6/lib/*",
-        "reforge.jadx.JadxWorker",
+        "-jar",
+        "/path/to/jadx-mcp.jar",
         "--workspace",
         "/path/to/job"
       ],
@@ -63,8 +58,6 @@ your checkout, JADX distribution, and job workspace:
   }
 }
 ```
-
-On Windows, use `;` between classpath entries.
 
 ## Behavior
 
