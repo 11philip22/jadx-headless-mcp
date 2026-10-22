@@ -25,7 +25,7 @@ src/main/java/reforge/jadx/
 
 ## Behavior to preserve
 
-Preserve all 31 tools and the existing `analysis/jadx/` inventory, edit, cache,
+Preserve all existing tools and the `analysis/jadx/` inventory, edit, cache,
 and log paths. Source remains lazy; renames and comments regenerate and verify
 source before an atomic save. Reload closes the old session before publishing
 a fully constructed replacement.
