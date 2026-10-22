@@ -29,8 +29,9 @@ final class SearchService implements JadxServices.Search {
         Set<String> scopes = request.scopes();
         String term = request.term(), pkg = request.packageName();
         List<ClassNode> selected = session.classes().values().stream().filter(c -> pkg.isEmpty() || JadxNodes.inPackage(c.getPackage(), pkg)).toList();
-        List<Identity> matches = new ArrayList<>();
+        Map<String, Identity> matches = new LinkedHashMap<>();
         List<SearchFailure> failures = new ArrayList<>();
+        Set<String> searchedSources = new HashSet<>();
         for (ClassNode cls : selected) {
             List<String> texts = new ArrayList<>();
             if (scopes.contains("class")) texts.addAll(List.of(cls.getFullName(), cls.getRawName()));
@@ -39,14 +40,21 @@ final class SearchService implements JadxServices.Search {
             if (scopes.contains("comment")) for (JadxEditStore.SavedEntry entry : edits.comments()) {
                 if (entry.node().className().equals(cls.getRawName())) texts.add(entry.comment());
             }
-            if (scopes.contains("code")) try {
-                texts.add(decompiler.source(cls).getCodeStr());
-                List<String> errors = decompiler.sourceErrors(cls);
-                if (!errors.isEmpty()) failures.add(new SourceErrors(cls.getRawName(), errors));
-            } catch (Exception ex) { failures.add(new SourceFailure(cls.getRawName(), ex.getMessage())); }
-            if (texts.stream().anyMatch(t -> WorkerJson.fold(t).contains(term))) matches.add(JadxNodes.describe(cls));
+            if (texts.stream().anyMatch(t -> WorkerJson.fold(t).contains(term))) {
+                Identity match = JadxNodes.describe(cls);
+                matches.putIfAbsent(match.originalId(), match);
+            }
+            ClassNode top = cls.getTopParentClass();
+            if (scopes.contains("code") && searchedSources.add(top.getRawName())) try {
+                if (WorkerJson.fold(decompiler.source(top).getCodeStr()).contains(term)) {
+                    Identity match = JadxNodes.describe(top);
+                    matches.putIfAbsent(match.originalId(), match);
+                }
+                List<String> errors = decompiler.sourceErrors(top);
+                if (!errors.isEmpty()) failures.add(new SourceErrors(top.getRawName(), errors));
+            } catch (Exception ex) { failures.add(new SourceFailure(top.getRawName(), ex.getMessage())); }
         }
-        return new SearchResult(request.page().select(matches), pkg, scopes, selected.size(),
+        return new SearchResult(request.page().select(new ArrayList<>(matches.values())), pkg, scopes, selected.size(),
                 failures, scopes.contains("code") ? "Enclosing class source includes inner classes" : null);
     }
 
