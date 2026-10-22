@@ -36,11 +36,37 @@
       <artifactId>jadx-core</artifactId>
       <version>${jadx.version}</version>
     </dependency>
-    <!-- Supplies the existing disk cache and the distribution's input plugins. -->
+    <!-- Supplies the existing disk cache without pulling in the GUI application. -->
     <dependency>
       <groupId>io.github.skylot</groupId>
       <artifactId>jadx-gui</artifactId>
       <version>${jadx.version}</version>
+      <exclusions>
+        <exclusion>
+          <groupId>*</groupId>
+          <artifactId>*</artifactId>
+        </exclusion>
+      </exclusions>
+    </dependency>
+    <dependency>
+      <groupId>io.github.skylot</groupId>
+      <artifactId>jadx-dex-input</artifactId>
+      <version>${jadx.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>io.github.skylot</groupId>
+      <artifactId>jadx-apkm-input</artifactId>
+      <version>${jadx.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>io.github.skylot</groupId>
+      <artifactId>jadx-xapk-input</artifactId>
+      <version>${jadx.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>ch.qos.logback</groupId>
+      <artifactId>logback-classic</artifactId>
+      <version>1.5.38</version>
     </dependency>
     <dependency>
       <groupId>com.google.code.gson</groupId>
@@ -127,6 +153,16 @@
                     <exclude>module-info.class</exclude>
                     <exclude>META-INF/versions/**/module-info.class</exclude>
                   </excludes>
+                </filter>
+                <filter>
+                  <artifact>io.github.skylot:jadx-gui</artifact>
+                  <includes>
+                    <include>jadx/gui/cache/code/disk/**</include>
+                    <include>META-INF/LICENSE*</include>
+                    <include>META-INF/NOTICE*</include>
+                    <include>LICENSE*</include>
+                    <include>NOTICE*</include>
+                  </includes>
                 </filter>
               </filters>
               <transformers>
