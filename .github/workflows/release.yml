@@ -5,12 +5,13 @@ on:
     tags:
       - "**"
 
-permissions:
-  contents: write
-
 jobs:
   release:
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    outputs:
+      version: ${{ steps.version.outputs.version }}
 
     steps:
       - uses: actions/checkout@v7
@@ -20,6 +21,15 @@ jobs:
           distribution: temurin
           java-version: "21"
           cache: maven
+
+      - name: Set Maven version from the tag
+        id: version
+        run: |
+          if [[ "$GITHUB_REF_NAME" =~ ^v?([0-9][0-9A-Za-z._+-]*)$ ]]; then
+            version="${BASH_REMATCH[1]}"
+            mvn -B -ntp versions:set "-DnewVersion=$version" -DgenerateBackupPoms=false
+            echo "version=$version" >> "$GITHUB_OUTPUT"
+          fi
 
       - name: Build and check
         run: mvn -B -ntp package pmd:check
@@ -32,3 +42,37 @@ jobs:
           target/jadx-mcp.jar
           --generate-notes
           --verify-tag
+
+  publish-maven:
+    needs: release
+    if: needs.release.outputs.version != ''
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+
+    steps:
+      - uses: actions/setup-java@v6
+        with:
+          distribution: temurin
+          java-version: "21"
+          server-password: GH_TOKEN
+
+      - name: Publish the release JAR to GitHub Packages
+        env:
+          GH_TOKEN: ${{ github.token }}
+          VERSION: ${{ needs.release.outputs.version }}
+        run: |
+          gh release download "$GITHUB_REF_NAME" --repo "$GITHUB_REPOSITORY" --pattern jadx-mcp.jar
+          # The executable JAR already contains its runtime dependencies.
+          cat > released.pom <<EOF
+          <project xmlns="http://maven.apache.org/POM/4.0.0">
+            <modelVersion>4.0.0</modelVersion>
+            <groupId>reforge</groupId>
+            <artifactId>jadx-mcp</artifactId>
+            <version>$VERSION</version>
+          </project>
+          EOF
+          mvn -B -ntp org.apache.maven.plugins:maven-deploy-plugin:3.1.4:deploy-file \
+            -Dfile=jadx-mcp.jar -DpomFile=released.pom -DrepositoryId=github \
+            "-Durl=https://maven.pkg.github.com/${GITHUB_REPOSITORY,,}"
